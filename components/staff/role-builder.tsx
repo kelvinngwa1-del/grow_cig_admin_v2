@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   useMemo,
@@ -424,6 +424,25 @@ export default function StaffAccessManager({
   ] = useState("");
 
   // ============================================================
+  // ============================================================
+  // TEMPORARY MEMBERSHIP DATE ACCESS
+  // ============================================================
+
+  const [
+    backdateHours,
+    setBackdateHours,
+  ] = useState("4");
+
+  const [
+    backdateReason,
+    setBackdateReason,
+  ] = useState("");
+
+  const [
+    backdateSaving,
+    setBackdateSaving,
+  ] = useState(false);
+
   // GROUP DUTIES
   // ============================================================
 
@@ -769,6 +788,167 @@ export default function StaffAccessManager({
   }
 
   // ============================================================
+  // ============================================================
+  // TEMPORARY MEMBERSHIP DATE ACCESS ACTIONS
+  // ============================================================
+
+  async function grantBackdateAccess() {
+
+    setError("");
+    setSuccess("");
+
+    if (!selectedUserId) {
+      setError(
+        "Select a staff member first."
+      );
+      return;
+    }
+
+    const hours =
+      Number(
+        backdateHours
+      );
+
+    if (
+      Number.isNaN(hours) ||
+      hours <= 0
+    ) {
+      setError(
+        "Select a valid access period."
+      );
+      return;
+    }
+
+    const cleanReason =
+      backdateReason.trim();
+
+    if (
+      cleanReason.length < 3
+    ) {
+      setError(
+        "Enter a short reason for granting temporary access."
+      );
+      return;
+    }
+
+    setBackdateSaving(true);
+
+    try {
+
+      const expiresAt =
+        new Date(
+          Date.now() +
+            hours *
+              60 *
+              60 *
+              1000
+        ).toISOString();
+
+      const supabase =
+        createClient();
+
+      const {
+        error: rpcError,
+      } = await supabase.rpc(
+        "admin_grant_member_backdate_access",
+        {
+          p_staff_id:
+            selectedUserId,
+
+          p_expires_at:
+            expiresAt,
+
+          p_reason:
+            cleanReason,
+        }
+      );
+
+      if (rpcError) {
+        throw rpcError;
+      }
+
+      setSuccess(
+        `Temporary membership-date access granted for ${hours} hour${
+          hours === 1
+            ? ""
+            : "s"
+        }.`
+      );
+
+      setBackdateReason("");
+
+      router.refresh();
+
+    } catch (err) {
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to grant temporary membership-date access."
+      );
+
+    } finally {
+
+      setBackdateSaving(false);
+
+    }
+  }
+
+
+  async function revokeBackdateAccess() {
+
+    setError("");
+    setSuccess("");
+
+    if (!selectedUserId) {
+      setError(
+        "Select a staff member first."
+      );
+      return;
+    }
+
+    setBackdateSaving(true);
+
+    try {
+
+      const supabase =
+        createClient();
+
+      const {
+        error: rpcError,
+      } = await supabase.rpc(
+        "admin_revoke_member_backdate_access",
+        {
+          p_staff_id:
+            selectedUserId,
+        }
+      );
+
+      if (rpcError) {
+        throw rpcError;
+      }
+
+      setSuccess(
+        "Temporary membership-date access revoked."
+      );
+
+      router.refresh();
+
+    } catch (err) {
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unable to revoke temporary membership-date access."
+      );
+
+    } finally {
+
+      setBackdateSaving(false);
+
+    }
+  }
+
   // SELECTED PERSON
   // ============================================================
 
@@ -785,6 +965,17 @@ export default function StaffAccessManager({
           selectedUserId
         )
       : null;
+
+  const currentStaff =
+    currentUserId
+      ? staffById.get(
+          currentUserId
+        )
+      : null;
+
+  const isSuperAdmin =
+    currentStaff?.legacy_role ===
+    "super_admin";
 
   // ============================================================
   // UI
@@ -1343,7 +1534,126 @@ export default function StaffAccessManager({
 
                 </div>
 
-                {/* MESSAGES */}
+                                {isSuperAdmin &&
+                  selectedStaff &&
+                  selectedStaff.legacy_role !==
+                    "super_admin" && (
+
+                  <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+
+                    <p className="font-black text-slate-950">
+                      Temporary Membership Date Access
+                    </p>
+
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      Temporarily allow {selectedStaff.full_name} to enter an older Membership Start Date when adding an existing GROW member.
+                    </p>
+
+                    <div className="mt-5 grid gap-4 md:grid-cols-2">
+
+                      <div>
+                        <label className="text-xs font-black uppercase tracking-wide text-slate-500">
+                          Access Period
+                        </label>
+
+                        <select
+                          value={backdateHours}
+                          onChange={(event) =>
+                            setBackdateHours(
+                              event.target.value
+                            )
+                          }
+                          className="form-input mt-2"
+                        >
+                          <option value="1">
+                            1 Hour
+                          </option>
+
+                          <option value="4">
+                            4 Hours
+                          </option>
+
+                          <option value="8">
+                            8 Hours
+                          </option>
+
+                          <option value="12">
+                            12 Hours
+                          </option>
+
+                          <option value="24">
+                            24 Hours
+                          </option>
+
+                          <option value="48">
+                            48 Hours
+                          </option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-black uppercase tracking-wide text-slate-500">
+                          Reason
+                        </label>
+
+                        <input
+                          type="text"
+                          value={backdateReason}
+                          onChange={(event) =>
+                            setBackdateReason(
+                              event.target.value
+                            )
+                          }
+                          placeholder="Example: Adding migrated members"
+                          className="form-input mt-2"
+                        />
+                      </div>
+
+                    </div>
+
+                    <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+
+                      <button
+                        type="button"
+                        disabled={
+                          backdateSaving ||
+                          backdateReason
+                            .trim()
+                            .length < 3
+                        }
+                        onClick={
+                          grantBackdateAccess
+                        }
+                        className="rounded-xl bg-amber-600 px-5 py-3 text-sm font-black text-white disabled:opacity-50"
+                      >
+                        {backdateSaving
+                          ? "Processing..."
+                          : "Grant Temporary Access"}
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={
+                          backdateSaving
+                        }
+                        onClick={
+                          revokeBackdateAccess
+                        }
+                        className="rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-black text-red-700 disabled:opacity-50"
+                      >
+                        Revoke Access
+                      </button>
+
+                    </div>
+
+                    <p className="mt-4 text-xs leading-5 text-slate-500">
+                      Access expires automatically and does not change the staff member's normal duties.
+                    </p>
+
+                  </div>
+
+                )}
+{/* MESSAGES */}
 
                 {error && (
                   <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">

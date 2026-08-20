@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   useEffect,
@@ -31,6 +31,7 @@ import { createClient } from "@/lib/supabase/client";
 import CreateLoanModal from "./create-loan-modal";
 import AccountAdjustmentModal from "./account-adjustment-modal";
 import RegistrationPaymentModal from "./registration-payment-modal";
+import AccountStatement from "./account-statement";
 
 type Staff = {
   full_name: string;
@@ -196,7 +197,7 @@ function formatDate(
   value: string | null
 ) {
   if (!value) {
-    return "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â";
+    return "ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â";
   }
 
   const date =
@@ -207,7 +208,7 @@ function formatDate(
       date.getTime()
     )
   ) {
-    return "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â";
+    return "ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â";
   }
 
   return date.toLocaleDateString(
@@ -548,7 +549,7 @@ export default function MemberProfile({
               href="/members"
               className="text-xs font-bold text-blue-700 hover:underline"
             >
-              ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Members
+              ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Ãƒâ€šÃ‚Â Members
             </Link>
 
             <h1 className="mt-2 text-2xl font-black text-slate-950">
@@ -658,7 +659,7 @@ export default function MemberProfile({
                     icon={Users}
                     label={`Referral code: ${
                       member.referral_code ??
-                      "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â"
+                      "ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â"
                     }`}
                   />
 
@@ -927,7 +928,18 @@ export default function MemberProfile({
         </section>
 
 
-        {/* ====================================================
+                <AccountStatement
+          memberId={
+            member.user_id
+          }
+          memberName={
+            member.full_name ??
+            "Member"
+          }
+        />
+
+
+{/* ====================================================
             RECORDS + KYC
         ==================================================== */}
 

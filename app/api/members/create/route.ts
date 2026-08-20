@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -143,6 +143,12 @@ export async function POST(
           0
       );
 
+    const requestedMembershipStartDate =
+      String(
+        body.membership_start_date ?? ""
+      ).trim();
+
+
     // ============================================================
     // VALIDATION
     // ============================================================
@@ -220,7 +226,103 @@ export async function POST(
         }
       );
     }
+    // ============================================================
+    // MEMBERSHIP START DATE
+    // ============================================================
 
+    let membershipStartDate:
+      string | null = null;
+
+    if (requestedMembershipStartDate) {
+
+      if (
+        !/^\d{4}-\d{2}-\d{2}$/.test(
+          requestedMembershipStartDate
+        )
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Membership start date is invalid.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      const parsedMembershipDate =
+        new Date(
+          `${requestedMembershipStartDate}T00:00:00Z`
+        );
+
+      if (
+        Number.isNaN(
+          parsedMembershipDate.getTime()
+        )
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Membership start date is invalid.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      const today =
+        new Date();
+
+      today.setUTCHours(
+        0,
+        0,
+        0,
+        0
+      );
+
+      if (
+        parsedMembershipDate.getTime() >
+        today.getTime()
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "Membership start date cannot be in the future.",
+          },
+          {
+            status: 400,
+          }
+        );
+      }
+
+      const {
+        data: canBackdateMembership,
+        error: backdatePermissionError,
+      } =
+        await supabase.rpc(
+          "can_backdate_member_start_date"
+        );
+
+      if (
+        backdatePermissionError ||
+        !canBackdateMembership
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "You are not authorized to set a historical membership start date.",
+          },
+          {
+            status: 403,
+          }
+        );
+      }
+
+      membershipStartDate =
+        requestedMembershipStartDate;
+    }
     // ============================================================
     // ADMIN CLIENT
     // ============================================================
@@ -394,6 +496,12 @@ export async function POST(
         dateOfBirth;
     }
 
+    if (membershipStartDate) {
+      profileUpdate.membership_start_date =
+        membershipStartDate;
+    }
+
+
     const {
       data: profile,
       error: profileError,
@@ -480,3 +588,4 @@ export async function POST(
     );
   }
 }
+

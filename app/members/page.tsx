@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+﻿import { redirect } from "next/navigation";
 
 import MembersTable from "@/components/members/members-table";
 import { createClient } from "@/lib/supabase/server";
@@ -51,11 +51,20 @@ export default async function MembersPage() {
     );
   }
 
+  const {
+    data: canBackdateMembership,
+  } = await supabase.rpc(
+    "can_backdate_member_start_date"
+  );
+
   return (
     <MembersTable
       members={members ?? []}
       staffName={staff.full_name}
       staffRole={staff.role}
+      canBackdateMembership={
+        canBackdateMembership === true
+      }
     />
   );
 }
