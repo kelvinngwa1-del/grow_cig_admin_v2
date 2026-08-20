@@ -19,6 +19,7 @@ import {
   Filter,
   HandCoins,
   Loader2,
+  Pencil,
   Plus,
   Search,
   UserCheck,
@@ -119,7 +120,8 @@ type SortField =
 type Props = {
   members: Member[];
   staffName: string;
-  staffRole: string;
+  staffRole: string;
+  canBackdateMembership: boolean;
 };
 
 type CreateMemberForm = {
@@ -134,9 +136,23 @@ type CreateMemberForm = {
   current_location: string;
   occupation: string;
 
+  membership_start_date: string;
+
+
   registration_fee_paid: string;
 };
 
+
+type EditMemberForm = {
+  full_name: string;
+  email: string;
+  phone: string;
+  date_of_birth: string;
+  place_of_birth: string;
+  current_location: string;
+  occupation: string;
+  membership_start_date: string;
+};
 // ================================================================
 // HELPERS
 // ================================================================
@@ -169,7 +185,7 @@ function date(
     | null
 ) {
   if (!value) {
-    return "Ã¢â‚¬â€";
+    return "ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â";
   }
 
   return new Date(
@@ -277,7 +293,9 @@ const initialMemberForm:
 
   current_location: "",
   occupation: "",
+
 
+  membership_start_date: "",
   registration_fee_paid:
     "0",
 };
@@ -290,6 +308,7 @@ export default function MembersTable({
   members,
   staffName,
   staffRole,
+canBackdateMembership,
 }: Props) {
   const router =
     useRouter();
@@ -375,6 +394,57 @@ export default function MembersTable({
   ] =
     useState("");
 
+
+  // ==============================================================
+  // EDIT MEMBER STATE
+  // ==============================================================
+
+  const [
+    editingMemberId,
+    setEditingMemberId,
+  ] =
+    useState<string | null>(
+      null
+    );
+
+  const [
+    editForm,
+    setEditForm,
+  ] =
+    useState<EditMemberForm>({
+      full_name: "",
+      email: "",
+      phone: "",
+      date_of_birth: "",
+      place_of_birth: "",
+      current_location: "",
+      occupation: "",
+      membership_start_date: "",
+    });
+
+  const [
+    loadingEdit,
+    setLoadingEdit,
+  ] =
+    useState(false);
+
+  const [
+    savingEdit,
+    setSavingEdit,
+  ] =
+    useState(false);
+
+  const [
+    editError,
+    setEditError,
+  ] =
+    useState("");
+
+  const [
+    editSuccess,
+    setEditSuccess,
+  ] =
+    useState("");
   // ==============================================================
   // STAFF PERMISSION
   // ==============================================================
@@ -401,6 +471,220 @@ export default function MembersTable({
       null
     );
 
+
+  function updateEditField(
+    field: keyof EditMemberForm,
+    value: string
+  ) {
+    setEditForm(
+      (current) => ({
+        ...current,
+        [field]: value,
+      })
+    );
+  }
+
+  async function openEditMember(
+    member: Member
+  ) {
+    setEditingMemberId(
+      member.user_id
+    );
+
+    setEditError("");
+    setEditSuccess("");
+    setLoadingEdit(true);
+
+    try {
+      const response =
+        await fetch(
+          `/api/members/${member.user_id}/edit`,
+          {
+            method: "GET",
+            cache: "no-store",
+          }
+        );
+
+      const result =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error ??
+            "Unable to load member information."
+        );
+      }
+
+      const profile =
+        result?.member;
+
+      setEditForm({
+        full_name:
+          String(
+            profile?.full_name ?? ""
+          ),
+
+        email:
+          String(
+            profile?.email ?? ""
+          ),
+
+        phone:
+          String(
+            profile?.phone ?? ""
+          ),
+
+        date_of_birth:
+          profile?.date_of_birth
+            ? String(
+                profile.date_of_birth
+              ).slice(
+                0,
+                10
+              )
+            : "",
+
+        place_of_birth:
+          String(
+            profile?.place_of_birth ?? ""
+          ),
+
+        current_location:
+          String(
+            profile?.current_location ?? ""
+          ),
+
+        occupation:
+          String(
+            profile?.occupation ?? ""
+          ),
+
+        membership_start_date:
+          profile?.membership_start_date
+            ? String(
+                profile.membership_start_date
+              ).slice(
+                0,
+                10
+              )
+            : "",
+      });
+    } catch (error) {
+      setEditError(
+        error instanceof Error
+          ? error.message
+          : "Unable to load member information."
+      );
+    } finally {
+      setLoadingEdit(false);
+    }
+  }
+
+  function closeEditMember() {
+    if (savingEdit) {
+      return;
+    }
+
+    setEditingMemberId(
+      null
+    );
+
+    setEditError("");
+    setEditSuccess("");
+  }
+
+  async function submitEditMember(
+    event:
+      FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
+
+    if (!editingMemberId) {
+      return;
+    }
+
+    setEditError("");
+    setEditSuccess("");
+
+    if (
+      editForm.full_name
+        .trim()
+        .length < 2
+    ) {
+      setEditError(
+        "Enter the member's full name."
+      );
+
+      return;
+    }
+
+    setSavingEdit(true);
+
+    try {
+      const response =
+        await fetch(
+          `/api/members/${editingMemberId}/edit`,
+          {
+            method: "PATCH",
+
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+
+            body:
+              JSON.stringify({
+                full_name:
+                  editForm.full_name.trim(),
+
+                phone:
+                  editForm.phone.trim(),
+
+                date_of_birth:
+                  editForm.date_of_birth ||
+                  null,
+
+                place_of_birth:
+                  editForm.place_of_birth.trim(),
+
+                current_location:
+                  editForm.current_location.trim(),
+
+                occupation:
+                  editForm.occupation.trim(),
+
+                membership_start_date:
+                  editForm.membership_start_date ||
+                  null,
+              }),
+          }
+        );
+
+      const result =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result?.error ??
+            "Unable to update member."
+        );
+      }
+
+      setEditSuccess(
+        "Member information updated successfully."
+      );
+
+      router.refresh();
+    } catch (error) {
+      setEditError(
+        error instanceof Error
+          ? error.message
+          : "Unable to update member."
+      );
+    } finally {
+      setSavingEdit(false);
+    }
+  }
   const canCreateMember =
     staffRole ===
       "super_admin" ||
@@ -959,7 +1243,16 @@ export default function MembersTable({
                     createForm.occupation.trim(),
 
                   registration_fee_paid:
-                    registrationFeePaid,
+                    registrationFeePaid,
+
+
+                  membership_start_date:
+
+                    canBackdateMembership
+
+                      ? createForm.membership_start_date || null
+
+                      : null,
                 }
               ),
           }
@@ -1121,7 +1414,7 @@ export default function MembersTable({
               href="/dashboard"
               className="text-xs font-bold text-blue-700 hover:underline"
             >
-              Ã¢â€ Â Dashboard
+              ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Dashboard
             </Link>
 
             <h1 className="mt-2 text-2xl font-black text-slate-950">
@@ -1800,16 +2093,39 @@ export default function MembersTable({
 
                         <td className="px-5 py-4">
 
-                          <Link
-                            href={`/members/${member.user_id}`}
-                            className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700"
-                          >
-                            View
+                          <div className="flex items-center gap-2">
 
-                            <ChevronRight
-                              size={15}
-                            />
-                          </Link>
+                            {staffRole ===
+                              "super_admin" && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openEditMember(
+                                    member
+                                  )
+                                }
+                                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-50"
+                              >
+                                <Pencil
+                                  size={14}
+                                />
+
+                                Edit
+                              </button>
+                            )}
+
+                            <Link
+                              href={`/members/${member.user_id}`}
+                              className="inline-flex items-center gap-1 rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700"
+                            >
+                              View
+
+                              <ChevronRight
+                                size={15}
+                              />
+                            </Link>
+
+                          </div>
 
                         </td>
 
@@ -2303,6 +2619,32 @@ export default function MembersTable({
                 </p>
 
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  {canBackdateMembership && (
+                    <FormField
+                      label="Membership Start Date"
+                    >
+                      <div>
+                        <input
+                          type="date"
+                          value={
+                            createForm.membership_start_date
+                          }
+                          onChange={(event) =>
+                            updateCreateField(
+                              "membership_start_date",
+                              event.target.value
+                            )
+                          }
+                          className="form-input"
+                        />
+
+                        <p className="mt-2 text-xs leading-5 text-slate-500">
+                          For an existing member, select the date they originally joined GROW. Leave this blank for a new member joining today.
+                        </p>
+                      </div>
+                    </FormField>
+                  )}
+
 
                   <FormField
                     label="Registration Fee Paid"
@@ -2412,6 +2754,316 @@ export default function MembersTable({
         </div>
       )}
 
+
+      {/* ========================================================
+          EDIT MEMBER MODAL
+      ======================================================== */}
+
+      {editingMemberId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
+
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-5">
+
+              <div>
+                <div className="flex items-center gap-2">
+                  <Pencil
+                    size={20}
+                    className="text-blue-700"
+                  />
+
+                  <h2 className="text-xl font-black text-slate-950">
+                    Edit Member
+                  </h2>
+                </div>
+
+                <p className="mt-1 text-sm text-slate-500">
+                  Update personal member information.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={
+                  closeEditMember
+                }
+                disabled={
+                  savingEdit
+                }
+                className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"
+              >
+                <X
+                  size={20}
+                />
+              </button>
+
+            </div>
+
+            {loadingEdit ? (
+              <div className="flex min-h-64 items-center justify-center">
+
+                <div className="text-center">
+
+                  <Loader2
+                    size={30}
+                    className="mx-auto animate-spin text-blue-700"
+                  />
+
+                  <p className="mt-3 text-sm font-semibold text-slate-500">
+                    Loading member information...
+                  </p>
+
+                </div>
+
+              </div>
+            ) : (
+              <form
+                onSubmit={
+                  submitEditMember
+                }
+                className="p-6"
+              >
+
+                {editError && (
+                  <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                    {editError}
+                  </div>
+                )}
+
+                {editSuccess && (
+                  <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700">
+                    {editSuccess}
+                  </div>
+                )}
+
+                <div className="grid gap-5 sm:grid-cols-2">
+
+                  <FormField
+                    label="Full Name"
+                    required
+                  >
+                    <input
+                      type="text"
+                      value={
+                        editForm.full_name
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        updateEditField(
+                          "full_name",
+                          event.target.value
+                        )
+                      }
+                      className="form-input"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Phone Number"
+                  >
+                    <input
+                      type="text"
+                      value={
+                        editForm.phone
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        updateEditField(
+                          "phone",
+                          event.target.value
+                        )
+                      }
+                      className="form-input"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Email"
+                  >
+                    <div>
+                      <input
+                        type="email"
+                        value={
+                          editForm.email
+                        }
+                        readOnly
+                        className="form-input cursor-not-allowed bg-slate-50 text-slate-500"
+                      />
+
+                      <p className="mt-2 text-xs text-slate-500">
+                        Email is locked because it is also used for account authentication.
+                      </p>
+                    </div>
+                  </FormField>
+
+                  <FormField
+                    label="Date of Birth"
+                  >
+                    <input
+                      type="date"
+                      value={
+                        editForm.date_of_birth
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        updateEditField(
+                          "date_of_birth",
+                          event.target.value
+                        )
+                      }
+                      className="form-input"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Place of Birth"
+                  >
+                    <input
+                      type="text"
+                      value={
+                        editForm.place_of_birth
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        updateEditField(
+                          "place_of_birth",
+                          event.target.value
+                        )
+                      }
+                      className="form-input"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Current Location"
+                  >
+                    <input
+                      type="text"
+                      value={
+                        editForm.current_location
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        updateEditField(
+                          "current_location",
+                          event.target.value
+                        )
+                      }
+                      className="form-input"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Occupation"
+                  >
+                    <input
+                      type="text"
+                      value={
+                        editForm.occupation
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        updateEditField(
+                          "occupation",
+                          event.target.value
+                        )
+                      }
+                      className="form-input"
+                    />
+                  </FormField>
+
+                  <FormField
+                    label="Membership Start Date"
+                  >
+                    <input
+                      type="date"
+                      value={
+                        editForm.membership_start_date
+                      }
+                      onChange={(
+                        event
+                      ) =>
+                        updateEditField(
+                          "membership_start_date",
+                          event.target.value
+                        )
+                      }
+                      className="form-input"
+                    />
+                  </FormField>
+
+                </div>
+
+                <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4">
+
+                  <p className="text-sm font-bold text-blue-900">
+                    Protected financial information
+                  </p>
+
+                  <p className="mt-1 text-xs leading-5 text-blue-700">
+                    Editing a member here does not change their account number, referral code, wallet balance, savings, transactions, goals or loans.
+                  </p>
+
+                </div>
+
+                <div className="mt-8 flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:justify-end">
+
+                  <button
+                    type="button"
+                    onClick={
+                      closeEditMember
+                    }
+                    disabled={
+                      savingEdit
+                    }
+                    className="rounded-xl border border-slate-200 px-5 py-3 text-sm font-bold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    Close
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={
+                      savingEdit
+                    }
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-700 px-6 py-3 text-sm font-bold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {savingEdit ? (
+                      <>
+                        <Loader2
+                          size={18}
+                          className="animate-spin"
+                        />
+
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Pencil
+                          size={17}
+                        />
+
+                        Save Changes
+                      </>
+                    )}
+                  </button>
+
+                </div>
+
+              </form>
+            )}
+
+          </div>
+
+        </div>
+      )}
       {/* ========================================================
           LOCAL FORM INPUT STYLE
       ======================================================== */}
