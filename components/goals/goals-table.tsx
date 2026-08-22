@@ -7,6 +7,10 @@ import {
 
 import Link from "next/link";
 
+import CreateGoalButton, {
+  type GoalMemberOption,
+} from "@/components/goals/create-goal-button";
+
 import {
   ArrowUpDown,
   CalendarDays,
@@ -71,6 +75,10 @@ type GoalRow = {
 
 type Props = {
   goals: GoalRow[];
+
+  members: GoalMemberOption[];
+
+  canManageGoals: boolean;
 
   staffName: string;
   staffRole: string;
@@ -147,7 +155,7 @@ function formatDate(
       date.getTime()
     )
   ) {
-    return "—";
+    return "Ã¢â‚¬â€";
   }
 
   return date.toLocaleDateString(
@@ -220,6 +228,8 @@ function getAvailableSavings(
 
 export default function GoalsTable({
   goals,
+  members,
+  canManageGoals,
   staffName,
   staffRole,
 }: Props) {
@@ -460,22 +470,33 @@ export default function GoalsTable({
 
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 sm:text-right">
+          <div className="flex flex-col gap-3 sm:items-end">
 
-            <p className="text-xs text-slate-400">
-              Signed in as
-            </p>
+            <CreateGoalButton
+              members={members}
+              canManageGoals={
+                canManageGoals
+              }
+            />
 
-            <p className="mt-1 text-sm font-black text-slate-950">
-              {staffName}
-            </p>
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 sm:text-right">
 
-            <p className="mt-1 text-xs font-bold uppercase text-blue-700">
-              {staffRole.replaceAll(
-                "_",
-                " "
-              )}
-            </p>
+              <p className="text-xs text-slate-400">
+                Signed in as
+              </p>
+
+              <p className="mt-1 text-sm font-black text-slate-950">
+                {staffName}
+              </p>
+
+              <p className="mt-1 text-xs font-bold uppercase text-blue-700">
+                {staffRole.replaceAll(
+                  "_",
+                  " "
+                )}
+              </p>
+
+            </div>
 
           </div>
 

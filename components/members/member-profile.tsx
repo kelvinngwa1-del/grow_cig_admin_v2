@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import {
   useEffect,
@@ -32,6 +32,8 @@ import CreateLoanModal from "./create-loan-modal";
 import AccountAdjustmentModal from "./account-adjustment-modal";
 import RegistrationPaymentModal from "./registration-payment-modal";
 import AccountStatement from "./account-statement";
+
+import CreateGoalButton from "@/components/goals/create-goal-button";
 
 type Staff = {
   full_name: string;
@@ -1103,6 +1105,55 @@ export default function MemberProfile({
           </p>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+
+              <div className="flex items-start gap-3">
+
+                <div className="rounded-xl bg-blue-50 p-3 text-blue-700">
+                  <Flag size={20} />
+                </div>
+
+                <div className="min-w-0 flex-1">
+
+                  <p className="font-black text-slate-950">
+                    Create Goal
+                  </p>
+
+                  <p className="mt-1 text-sm leading-5 text-slate-500">
+                    Create a savings Goal directly for this member.
+                  </p>
+
+                  <div className="mt-4">
+
+                    <CreateGoalButton
+                      members={[]}
+                      canManageGoals={true}
+                      fixedMember={{
+                        user_id:
+                          member.user_id,
+
+                        full_name:
+                          member.full_name,
+
+                        account_number:
+                          member.account_number,
+
+                        phone:
+                          member.phone,
+
+                        email:
+                          member.email,
+                      }}
+                      buttonLabel="Create Goal"
+                    />
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
 
             <ActionCard
               title="Create Loan"

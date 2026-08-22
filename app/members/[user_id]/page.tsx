@@ -282,6 +282,16 @@ export default async function MemberPage({
       registrationData?.registration_fee_paid ??
       0,
   };
+  const {
+    data: canManageGoals,
+  } = await supabase.rpc(
+    "staff_has_permission",
+    {
+      p_permission_key:
+        "goals.manage",
+    }
+  );
+
 
 
   return (
@@ -314,6 +324,10 @@ export default async function MemberPage({
 
       kyc={
         kyc
+      }
+      canManageGoals={
+        canManageGoals ===
+        true
       }
 
       staff={{

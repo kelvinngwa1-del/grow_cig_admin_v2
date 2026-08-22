@@ -45,7 +45,7 @@ export default async function GoalsPage() {
   }
 
   // ============================================================
-  // SECURE ADMIN GOALS RPC
+  // GOALS
   // ============================================================
 
   const {
@@ -66,10 +66,63 @@ export default async function GoalsPage() {
     );
   }
 
+  // ============================================================
+  // GOAL MANAGEMENT PERMISSION
+  // ============================================================
+
+  const {
+    data: canManageGoals,
+  } = await supabase.rpc(
+    "staff_has_permission",
+    {
+      p_permission_key:
+        "goals.manage",
+    }
+  );
+
+  // ============================================================
+  // MEMBER OPTIONS
+  // ============================================================
+
+  let members:
+    | {
+        user_id: string;
+        full_name: string | null;
+        account_number:
+          | string
+          | null;
+        phone: string | null;
+        email: string | null;
+      }[]
+    = [];
+
+  if (
+    canManageGoals === true
+  ) {
+    const {
+      data: memberOptions,
+      error: memberError,
+    } = await supabase.rpc(
+      "get_admin_goal_member_options"
+    );
+
+    if (!memberError) {
+      members =
+        memberOptions ?? [];
+    }
+  }
+
   return (
     <GoalsTable
       goals={
         goals ?? []
+      }
+      members={
+        members
+      }
+      canManageGoals={
+        canManageGoals ===
+        true
       }
       staffName={
         staff.full_name ??
