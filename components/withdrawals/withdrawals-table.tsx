@@ -45,6 +45,11 @@ type WithdrawalRow = {
     | string
     | null;
 
+
+  momo_account_name:
+    | string
+    | null;
+
   status: string;
 
   admin_note:
@@ -296,6 +301,7 @@ export default function WithdrawalsTable({
                 withdrawal.account_number,
                 withdrawal.phone_number,
                 withdrawal.mobile_network,
+                withdrawal.momo_account_name,
                 withdrawal.member_phone,
                 withdrawal.member_email,
                 withdrawal.payout_reference,
@@ -699,6 +705,11 @@ export default function WithdrawalsTable({
                         </td>
 
                         <td className="px-5 py-5">
+                          <p className="font-black text-slate-950">
+                            {withdrawal.momo_account_name ??
+                              "Name not provided"}
+                          </p>
+
 
                           <p className="font-bold text-slate-900">
                             {withdrawal.phone_number}

@@ -89,7 +89,7 @@ function pretty(
     textValue(value);
 
   if (!text) {
-    return "â€”";
+    return "Ã¢â‚¬â€";
   }
 
   return text
@@ -111,7 +111,7 @@ function formatDateTime(
     textValue(value);
 
   if (!text) {
-    return "â€”";
+    return "Ã¢â‚¬â€";
   }
 
   const date =
@@ -122,7 +122,7 @@ function formatDateTime(
       date.getTime()
     )
   ) {
-    return "â€”";
+    return "Ã¢â‚¬â€";
   }
 
   return date.toLocaleString(
@@ -538,7 +538,7 @@ export default function WithdrawalDetails({
                   <p className="mt-1 font-bold text-blue-700">
                     {textValue(
                       member?.account_number
-                    ) || "â€”"}
+                    ) || "Ã¢â‚¬â€"}
                   </p>
 
                 </div>
@@ -554,12 +554,22 @@ export default function WithdrawalDetails({
               <div className="mt-7 grid gap-6 sm:grid-cols-2">
 
                 <Info
+                  label="MoMo Account Name"
+                  value={
+                    textValue(
+                      withdrawal.momo_account_name
+                    ) ||
+                    "Name not provided"
+                  }
+                />
+
+                <Info
                   label="MoMo Number"
                   value={
                     textValue(
                       withdrawal.phone_number
                     ) ||
-                    "â€”"
+                    "Ã¢â‚¬â€"
                   }
                 />
 
@@ -621,7 +631,7 @@ export default function WithdrawalDetails({
                     textValue(
                       withdrawal.payout_reference
                     ) ||
-                    "â€”"
+                    "Ã¢â‚¬â€"
                   }
                 />
 
@@ -697,7 +707,7 @@ export default function WithdrawalDetails({
                           {pretty(
                             action.previous_status
                           )}
-                          {" â†’ "}
+                          {" Ã¢â€ â€™ "}
                           {pretty(
                             action.new_status
                           )}

@@ -58,7 +58,7 @@ export default async function WithdrawalsPage() {
     data: withdrawals,
     error: withdrawalsError,
   } = await supabase.rpc(
-    "get_admin_withdrawals"
+    "get_admin_withdrawals_v2"
   );
 
   if (withdrawalsError) {
