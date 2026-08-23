@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   useEffect,
@@ -153,6 +153,7 @@ type Props = {
     | null;
 
   staff: Staff;
+  canManageGoals: boolean;
 };
 
 function numberValue(
@@ -199,7 +200,7 @@ function formatDate(
   value: string | null
 ) {
   if (!value) {
-    return "ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â";
+    return "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â";
   }
 
   const date =
@@ -210,7 +211,7 @@ function formatDate(
       date.getTime()
     )
   ) {
-    return "ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â";
+    return "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â";
   }
 
   return date.toLocaleDateString(
@@ -267,6 +268,7 @@ export default function MemberProfile({
   referrals,
   kyc,
   staff,
+  canManageGoals,
 }: Props) {
   const [
     showCreateLoan,
@@ -551,7 +553,7 @@ export default function MemberProfile({
               href="/members"
               className="text-xs font-bold text-blue-700 hover:underline"
             >
-              ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Ãƒâ€šÃ‚Â Members
+              ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â Members
             </Link>
 
             <h1 className="mt-2 text-2xl font-black text-slate-950">
@@ -661,7 +663,7 @@ export default function MemberProfile({
                     icon={Users}
                     label={`Referral code: ${
                       member.referral_code ??
-                      "ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â"
+                      "ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â"
                     }`}
                   />
 
@@ -1127,7 +1129,7 @@ export default function MemberProfile({
 
                     <CreateGoalButton
                       members={[]}
-                      canManageGoals={true}
+                      canManageGoals={canManageGoals}
                       fixedMember={{
                         user_id:
                           member.user_id,
@@ -1617,3 +1619,6 @@ function StatusPill({
     </span>
   );
 }
+
+
+
