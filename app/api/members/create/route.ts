@@ -10,6 +10,10 @@ export async function POST(
     const supabase =
       await createClient();
 
+    // ============================================================
+    // AUTHENTICATION
+    // ============================================================
+
     const {
       data: { user },
     } =
@@ -28,7 +32,7 @@ export async function POST(
     }
 
     // ============================================================
-    // VERIFY STAFF
+    // VERIFY ACTIVE STAFF
     // ============================================================
 
     const {
@@ -63,24 +67,29 @@ export async function POST(
     }
 
     // ============================================================
-    // ALLOWED STAFF ROLES
+    // CREATE MEMBER PERMISSION
     // ============================================================
 
-    const allowedRoles = [
-      "super_admin",
-      "finance_admin",
-      "pos_staff",
-    ];
+    const {
+      data: canCreateMembers,
+      error: createPermissionError,
+    } =
+      await supabase.rpc(
+        "staff_has_permission",
+        {
+          p_permission_key:
+            "members.create",
+        }
+      );
 
     if (
-      !allowedRoles.includes(
-        staff.role
-      )
+      createPermissionError ||
+      !canCreateMembers
     ) {
       return NextResponse.json(
         {
           error:
-            "You are not authorized to create members.",
+            "You do not have permission to create members.",
         },
         {
           status: 403,
@@ -147,7 +156,6 @@ export async function POST(
       String(
         body.membership_start_date ?? ""
       ).trim();
-
 
     // ============================================================
     // VALIDATION
@@ -226,6 +234,7 @@ export async function POST(
         }
       );
     }
+
     // ============================================================
     // MEMBERSHIP START DATE
     // ============================================================
@@ -233,8 +242,9 @@ export async function POST(
     let membershipStartDate:
       string | null = null;
 
-    if (requestedMembershipStartDate) {
-
+    if (
+      requestedMembershipStartDate
+    ) {
       if (
         !/^\d{4}-\d{2}-\d{2}$/.test(
           requestedMembershipStartDate
@@ -297,6 +307,9 @@ export async function POST(
         );
       }
 
+      // Historical/backdated membership dates
+      // require the separate backdate permission.
+
       const {
         data: canBackdateMembership,
         error: backdatePermissionError,
@@ -323,6 +336,7 @@ export async function POST(
       membershipStartDate =
         requestedMembershipStartDate;
     }
+
     // ============================================================
     // ADMIN CLIENT
     // ============================================================
@@ -399,13 +413,8 @@ export async function POST(
     // ============================================================
     // CREATE AUTH USER
     //
-    // Existing auth trigger:
-    // on_auth_user_created
-    //
-    // Existing function:
-    // handle_new_user()
-    //
-    // This automatically creates:
+    // Existing on_auth_user_created trigger / handle_new_user()
+    // creates:
     // - profile
     // - account number
     // - referral code
@@ -496,11 +505,12 @@ export async function POST(
         dateOfBirth;
     }
 
-    if (membershipStartDate) {
+    if (
+      membershipStartDate
+    ) {
       profileUpdate.membership_start_date =
         membershipStartDate;
     }
-
 
     const {
       data: profile,
@@ -588,4 +598,3 @@ export async function POST(
     );
   }
 }
-

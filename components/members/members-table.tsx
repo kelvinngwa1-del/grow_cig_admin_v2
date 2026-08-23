@@ -116,12 +116,13 @@ type SortField =
   | "wallet_balance"
   | "goal_savings"
   | "total_savings";
-
 type Props = {
   members: Member[];
   staffName: string;
-  staffRole: string;
+  staffRole: string;
+
   canBackdateMembership: boolean;
+  canCreateMember: boolean;
 };
 
 type CreateMemberForm = {
@@ -293,7 +294,8 @@ const initialMemberForm:
 
   current_location: "",
   occupation: "",
-
+
+
 
   membership_start_date: "",
   registration_fee_paid:
@@ -303,12 +305,12 @@ const initialMemberForm:
 // ================================================================
 // COMPONENT
 // ================================================================
-
 export default function MembersTable({
   members,
   staffName,
   staffRole,
-canBackdateMembership,
+  canBackdateMembership,
+  canCreateMember,
 }: Props) {
   const router =
     useRouter();
@@ -685,13 +687,6 @@ canBackdateMembership,
       setSavingEdit(false);
     }
   }
-  const canCreateMember =
-    staffRole ===
-      "super_admin" ||
-    staffRole ===
-      "finance_admin" ||
-    staffRole ===
-      "pos_staff";
 
   // ==============================================================
   // FILTER + SEARCH + SORT
@@ -1243,7 +1238,8 @@ canBackdateMembership,
                     createForm.occupation.trim(),
 
                   registration_fee_paid:
-                    registrationFeePaid,
+                    registrationFeePaid,
+
 
 
                   membership_start_date:

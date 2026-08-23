@@ -57,6 +57,17 @@ export default async function MembersPage() {
     "can_backdate_member_start_date"
   );
 
+  const {
+    data: canCreateMember,
+    error: createPermissionError,
+  } = await supabase.rpc(
+    "staff_has_permission",
+    {
+      p_permission_key:
+        "members.create",
+    }
+  );
+
   return (
     <MembersTable
       members={members ?? []}
@@ -64,6 +75,10 @@ export default async function MembersPage() {
       staffRole={staff.role}
       canBackdateMembership={
         canBackdateMembership === true
+      }
+      canCreateMember={
+        !createPermissionError &&
+        canCreateMember === true
       }
     />
   );
