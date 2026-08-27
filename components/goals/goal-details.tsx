@@ -125,6 +125,65 @@ function penaltyPercent(
   )}%`;
 }
 
+function accruedInterest(
+  savedAmount: unknown,
+  annualInterestRate: unknown,
+  createdAt: unknown
+) {
+  const saved =
+    numberValue(savedAmount);
+
+  const rate =
+    numberValue(
+      annualInterestRate
+    );
+
+  if (
+    !createdAt ||
+    typeof createdAt !== "string"
+  ) {
+    return 0;
+  }
+
+  const created =
+    new Date(createdAt);
+
+  if (
+    Number.isNaN(
+      created.getTime()
+    )
+  ) {
+    return 0;
+  }
+
+  const now =
+    new Date();
+
+  const milliseconds =
+    now.getTime() -
+    created.getTime();
+
+  const daysActive =
+    Math.max(
+      0,
+      Math.floor(
+        milliseconds /
+          (
+            1000 *
+            60 *
+            60 *
+            24
+          )
+      )
+    );
+
+  return (
+    saved *
+    (rate / 100) *
+    (daysActive / 365)
+  );
+}
+
 function formatDate(
   value: unknown
 ) {
@@ -133,7 +192,7 @@ function formatDate(
       "string" ||
     !value
   ) {
-    return "â€”";
+    return "—";
   }
 
   const date =
@@ -144,7 +203,7 @@ function formatDate(
       date.getTime()
     )
   ) {
-    return "â€”";
+    return "—";
   }
 
   return date.toLocaleDateString(
@@ -165,7 +224,7 @@ function formatDateTime(
       "string" ||
     !value
   ) {
-    return "â€”";
+    return "—";
   }
 
   const date =
@@ -176,7 +235,7 @@ function formatDateTime(
       date.getTime()
     )
   ) {
-    return "â€”";
+    return "—";
   }
 
   return date.toLocaleString(
@@ -1128,6 +1187,17 @@ export default function GoalDetails({
                 />
 
                 <InfoValue
+                  label="Accrued Interest"
+                  value={money(
+                    accruedInterest(
+                      goal.saved_amount,
+                      goal.annual_interest_rate,
+                      goal.created_at
+                    )
+                  )}
+                />
+
+                <InfoValue
                   label="Early Withdrawal Penalty"
                   value={penaltyPercent(
                     goal.early_withdrawal_penalty_rate
@@ -1259,14 +1329,14 @@ export default function GoalDetails({
                           {textValue(
                             transaction.reference
                           ) ||
-                            "â€”"}
+                            "—"}
                         </td>
 
                         <td className="max-w-sm px-5 py-4 text-sm text-slate-500">
                           {textValue(
                             transaction.description
                           ) ||
-                            "â€”"}
+                            "—"}
                         </td>
 
                         <td className="px-5 py-4">

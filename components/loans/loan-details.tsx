@@ -870,6 +870,124 @@ export default function LoanDetails({
                 }
               />
 
+{/* ============================================================
+    REPAYMENT SCHEDULE
+============================================================ */}
+
+{repayments.length > 0 && (
+  <div className="rounded-3xl border border-slate-200 bg-white p-6">
+
+    <div className="mb-5">
+      <p className="text-lg font-black text-slate-950">
+        Repayment Schedule
+      </p>
+
+      <p className="mt-1 text-sm text-slate-500">
+        Customer repayment dates and installment progress.
+      </p>
+    </div>
+
+    <div className="space-y-3">
+
+      {[...repayments]
+        .sort(
+          (a, b) =>
+            Number(a.installment_number ?? 0) -
+            Number(b.installment_number ?? 0)
+        )
+        .map((repayment) => {
+
+          const amountDue =
+            Number(repayment.amount_due ?? 0);
+
+          const amountPaid =
+            Number(repayment.amount_paid ?? 0);
+
+          const overdueInterest =
+            Number(repayment.overdue_interest ?? 0);
+
+          const remaining =
+            Math.max(
+              amountDue +
+                overdueInterest -
+                amountPaid,
+              0
+            );
+
+          const repaymentStatus =
+            String(
+              repayment.status ?? "pending"
+            ).toLowerCase();
+
+          return (
+            <div
+              key={repayment.id}
+              className="rounded-2xl border border-slate-200 p-4"
+            >
+
+              <div className="flex flex-wrap items-center justify-between gap-3">
+
+                <div>
+                  <p className="font-black text-slate-950">
+                    Installment{" "}
+                    {repayment.installment_number}
+                  </p>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Due:{" "}
+                    <span className="font-bold text-slate-800">
+                      {date(repayment.due_date)}
+                    </span>
+                  </p>
+                </div>
+
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-bold ${
+                    repaymentStatus === "paid" ||
+                    repaymentStatus === "confirmed"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : repaymentStatus === "overdue"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-amber-100 text-amber-700"
+                  }`}
+                >
+                  {repaymentStatus.toUpperCase()}
+                </span>
+
+              </div>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+
+                <Info
+                  label="Amount Due"
+                  value={money(amountDue)}
+                />
+
+                <Info
+                  label="Amount Paid"
+                  value={money(amountPaid)}
+                />
+
+                <Info
+                  label="Overdue Interest"
+                  value={money(overdueInterest)}
+                />
+
+                <Info
+                  label="Remaining"
+                  value={money(remaining)}
+                />
+
+              </div>
+
+            </div>
+          );
+        })}
+
+    </div>
+
+  </div>
+)}
               {/* =================================================
                   FIXED:
                   ACTUAL SUM OF amount_paid
