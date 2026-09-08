@@ -109,6 +109,17 @@ const navigation: NavigationItem[] =
 
     {
       label:
+        "Pay-In",
+      href:
+        "/pay-in",
+      permission:
+        "payments.initiate_payin",
+      icon:
+        CircleDollarSign,
+    },
+
+    {
+      label:
         "Withdrawals",
       href:
         "/withdrawals",
@@ -179,7 +190,7 @@ const navigation: NavigationItem[] =
       href:
         "/notifications",
       permission:
-        "settings.manage",
+        "notifications.individual",
       icon:
         BellRing,
     },
@@ -190,7 +201,7 @@ const navigation: NavigationItem[] =
       href:
         "/support",
       permission:
-        "settings.manage",
+        "support.tickets",
       icon:
         MessageSquare,
     },
