@@ -18,6 +18,7 @@ import {
   Flag,
   HandCoins,
   Mail,
+  MessageCircle,
   Phone,
   ReceiptText,
   ShieldCheck,
@@ -258,6 +259,84 @@ function addMonths(
   return result;
 }
 
+function whatsappNumber(
+  value: string | null
+) {
+  if (!value) {
+    return null;
+  }
+
+  let digits =
+    value.replace(/\D/g, "");
+
+  if (!digits) {
+    return null;
+  }
+
+  if (
+    digits.startsWith("00237")
+  ) {
+    digits =
+      digits.slice(2);
+  }
+
+  if (
+    digits.startsWith("0") &&
+    digits.length === 10
+  ) {
+    digits =
+      digits.slice(1);
+  }
+
+  if (
+    digits.length === 9 &&
+    digits.startsWith("6")
+  ) {
+    digits =
+      `237${digits}`;
+  }
+
+  if (
+    digits.length < 8 ||
+    digits.length > 15
+  ) {
+    return null;
+  }
+
+  return digits;
+}
+
+function whatsappStaffTitle(
+  role: string
+) {
+  const normalized =
+    role
+      .toLowerCase()
+      .replaceAll("_", " ")
+      .replaceAll("-", " ");
+
+  if (
+    normalized.includes(
+      "loan"
+    )
+  ) {
+    return "Loan Officer";
+  }
+
+  if (
+    normalized.includes(
+      "customer"
+    ) ||
+    normalized.includes(
+      "support"
+    )
+  ) {
+    return "Customer Relations Officer";
+  }
+
+  return pretty(role);
+}
+
 export default function MemberProfile({
   member,
   goals,
@@ -324,6 +403,55 @@ export default function MemberProfile({
         )
       : 0;
 
+
+  const memberWhatsAppNumber =
+    useMemo(
+      () =>
+        whatsappNumber(
+          member.phone
+        ),
+      [
+        member.phone,
+      ]
+    );
+
+  const memberWhatsAppUrl =
+    useMemo(() => {
+      if (
+        !memberWhatsAppNumber
+      ) {
+        return null;
+      }
+
+      const customerName =
+        member.full_name ??
+        "Member";
+
+      const staffName =
+        staff.full_name ??
+        "GROW CIG";
+
+      const staffTitle =
+        whatsappStaffTitle(
+          staff.role
+        );
+
+      const message =
+        `Hello ${customerName}, greetings from GROW CIG. ` +
+        `My name is ${staffName}, ${staffTitle}. ` +
+        `I’m reaching out regarding your account. ` +
+        `Are you available for a discussion?`;
+
+      return (
+        `https://wa.me/${memberWhatsAppNumber}` +
+        `?text=${encodeURIComponent(message)}`
+      );
+    }, [
+      member.full_name,
+      memberWhatsAppNumber,
+      staff.full_name,
+      staff.role,
+    ]);
 
   const active =
     member.member_activity_status ===
@@ -668,6 +796,20 @@ export default function MemberProfile({
                   />
 
                 </div>
+
+                {memberWhatsAppUrl && (
+                  <a
+                    href={memberWhatsAppUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white transition hover:bg-emerald-700"
+                  >
+                    <MessageCircle
+                      size={18}
+                    />
+                    Chat on WhatsApp
+                  </a>
+                )}
 
               </div>
 

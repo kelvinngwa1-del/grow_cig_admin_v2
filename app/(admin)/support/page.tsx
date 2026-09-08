@@ -179,6 +179,24 @@ export default function SupportPage() {
           return;
         }
 
+        const {
+          data: canManageSupport,
+          error: supportPermissionError,
+        } = await supabase.rpc(
+          "staff_has_permission",
+          {
+            p_permission_key: "support.tickets",
+          }
+        );
+
+        if (
+          supportPermissionError ||
+          canManageSupport !== true
+        ) {
+          router.replace("/dashboard");
+          return;
+        }
+
         const { data: ticketRows, error: ticketError } = await supabase
           .from("support_tickets")
           .select(

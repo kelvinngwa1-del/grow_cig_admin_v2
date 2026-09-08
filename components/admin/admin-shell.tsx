@@ -528,10 +528,17 @@ export default function AdminShell({
   ]);
 
   // ============================================================
-  // LOAD TOTAL MEMBER FUNDS
+  // LOAD TOTAL MEMBER FUNDS - SUPER ADMIN ONLY
   // ============================================================
 
   useEffect(() => {
+    if (staff.role !== "super_admin") {
+      setTotalMemberFunds(null);
+      setLoadingMemberFunds(false);
+      setMemberFundsError("");
+      return;
+    }
+
     let mounted =
       true;
 
@@ -607,6 +614,7 @@ export default function AdminShell({
         false;
     };
   }, [
+    staff.role,
     supabase,
   ]);
 
@@ -1141,14 +1149,15 @@ export default function AdminShell({
             </div>
           )}
 
-          {memberFundsError && (
-            <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
-              Unable to load member funds:{" "}
-              {
-                memberFundsError
-              }
-            </div>
-          )}
+          {staff.role === "super_admin" &&
+            memberFundsError && (
+              <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
+                Unable to load member funds:{" "}
+                {
+                  memberFundsError
+                }
+              </div>
+            )}
           {/* HERO */}
 
           <section className="rounded-3xl bg-gradient-to-br from-blue-700 via-blue-800 to-slate-950 p-6 text-white md:p-8">
@@ -1177,20 +1186,22 @@ export default function AdminShell({
 
           <section className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
 
-            <SummaryCard
-              title="Total Member Funds"
-              value={
-                loadingMemberFunds
-                  ? "..."
-                  : formatCfa(
-                      totalMemberFunds ??
-                      0
-                    )
-              }
-              icon={
-                PiggyBank
-              }
-            />
+            {staff.role === "super_admin" && (
+              <SummaryCard
+                title="Total Member Funds"
+                value={
+                  loadingMemberFunds
+                    ? "..."
+                    : formatCfa(
+                        totalMemberFunds ??
+                        0
+                      )
+                }
+                icon={
+                  PiggyBank
+                }
+              />
+            )}
             <SummaryCard
               title="Assigned Modules"
               value={

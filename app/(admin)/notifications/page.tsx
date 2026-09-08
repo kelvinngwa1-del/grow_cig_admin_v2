@@ -19,6 +19,8 @@ import {
   Users,
 } from "lucide-react";
 
+import { useRouter } from "next/navigation";
+
 import {
   createClient,
 } from "@/lib/supabase/client";
@@ -108,17 +110,34 @@ function recipientName(
     recipient.account_number?.trim();
 
   return account
-    ? `${name} • ${account}`
+    ? `${name} â€¢ ${account}`
     : name;
 }
 
 export default function NotificationsPage() {
+  const router = useRouter();
+
   const supabase =
     useMemo(
       () =>
         createClient(),
       []
     );
+
+  const [
+    canSendIndividual,
+    setCanSendIndividual,
+  ] = useState(false);
+
+  const [
+    canSendBroadcast,
+    setCanSendBroadcast,
+  ] = useState(false);
+
+  const [
+    permissionsLoaded,
+    setPermissionsLoaded,
+  ] = useState(false);
 
   const firstTemplate =
     templates[0];
@@ -214,111 +233,138 @@ export default function NotificationsPage() {
       ) => {
         try {
           if (silent) {
-            setRefreshing(
-              true
-            );
+            setRefreshing(true);
           } else {
-            setLoading(
-              true
-            );
+            setLoading(true);
           }
 
-          setErrorMessage(
-            ""
-          );
+          setErrorMessage("");
+
+          const {
+            data: { user },
+            error: userError,
+          } = await supabase.auth.getUser();
+
+          if (userError || !user) {
+            router.replace("/");
+            return;
+          }
+
+          const [
+            individualPermissionResult,
+            broadcastPermissionResult,
+          ] = await Promise.all([
+            supabase.rpc(
+              "staff_has_permission",
+              {
+                p_permission_key:
+                  "notifications.individual",
+              }
+            ),
+            supabase.rpc(
+              "staff_has_permission",
+              {
+                p_permission_key:
+                  "notifications.broadcast",
+              }
+            ),
+          ]);
+
+          if (individualPermissionResult.error) {
+            throw individualPermissionResult.error;
+          }
+
+          if (broadcastPermissionResult.error) {
+            throw broadcastPermissionResult.error;
+          }
+
+          const individualAllowed =
+            individualPermissionResult.data === true;
+
+          const broadcastAllowed =
+            broadcastPermissionResult.data === true;
+
+          setCanSendIndividual(individualAllowed);
+          setCanSendBroadcast(broadcastAllowed);
+          setPermissionsLoaded(true);
+
+          if (!individualAllowed && !broadcastAllowed) {
+            router.replace("/dashboard");
+            return;
+          }
+
+          setRecipientMode((current) => {
+            if (current === "all" && broadcastAllowed) {
+              return "all";
+            }
+
+            if (current === "single" && individualAllowed) {
+              return "single";
+            }
+
+            return broadcastAllowed
+              ? "all"
+              : "single";
+          });
 
           const [
             recipientResult,
             historyResult,
-          ] =
-            await Promise.all([
-              supabase.rpc(
-                "admin_list_notification_recipients"
-              ),
-              supabase.rpc(
-                "admin_recent_notification_broadcasts",
-                {
-                  p_limit:
-                    50,
-                }
-              ),
-            ]);
+          ] = await Promise.all([
+            supabase.rpc(
+              "admin_list_notification_recipients"
+            ),
+            supabase.rpc(
+              "admin_recent_notification_broadcasts",
+              {
+                p_limit: 50,
+              }
+            ),
+          ]);
 
-          if (
-            recipientResult.error
-          ) {
+          if (recipientResult.error) {
             throw recipientResult.error;
           }
 
-          if (
-            historyResult.error
-          ) {
+          if (historyResult.error) {
             throw historyResult.error;
           }
 
           const recipientRows =
-            (
-              recipientResult.data ||
-              []
-            ) as Recipient[];
+            (recipientResult.data || []) as Recipient[];
 
           const historyRows =
-            (
-              historyResult.data ||
-              []
-            ) as SentNotification[];
+            (historyResult.data || []) as SentNotification[];
 
-          setRecipients(
-            recipientRows
-          );
+          setRecipients(recipientRows);
+          setHistory(historyRows);
 
-          setHistory(
-            historyRows
-          );
-
-          setSelectedUserId(
-            (
-              current
-            ) => {
-              if (
-                current &&
-                recipientRows.some(
-                  (
-                    item
-                  ) =>
-                    item.user_id ===
-                    current
-                )
-              ) {
-                return current;
-              }
-
-              return (
-                recipientRows[0]
-                  ?.user_id ||
-                ""
-              );
+          setSelectedUserId((current) => {
+            if (
+              current &&
+              recipientRows.some(
+                (item) =>
+                  item.user_id === current
+              )
+            ) {
+              return current;
             }
-          );
-        } catch (
-          error: unknown
-        ) {
+
+            return recipientRows[0]?.user_id || "";
+          });
+        } catch (error: unknown) {
           setErrorMessage(
             error instanceof Error
               ? error.message
               : "Unable to load notification data."
           );
         } finally {
-          setLoading(
-            false
-          );
-
-          setRefreshing(
-            false
-          );
+          setLoading(false);
+          setRefreshing(false);
         }
       },
       [
+        router,
         supabase,
       ]
     );
@@ -380,6 +426,33 @@ export default function NotificationsPage() {
     setSuccessMessage(
       ""
     );
+
+    if (!permissionsLoaded) {
+      setErrorMessage(
+        "Notification permissions are still loading."
+      );
+      return;
+    }
+
+    if (
+      recipientMode === "all" &&
+      !canSendBroadcast
+    ) {
+      setErrorMessage(
+        "You do not have permission to send broadcast notifications."
+      );
+      return;
+    }
+
+    if (
+      recipientMode === "single" &&
+      !canSendIndividual
+    ) {
+      setErrorMessage(
+        "You do not have permission to send individual notifications."
+      );
+      return;
+    }
 
     if (!cleanTitle) {
       setErrorMessage(
@@ -632,84 +705,85 @@ export default function NotificationsPage() {
                   </label>
 
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setRecipientMode(
-                          "all"
-                        )
-                      }
-                      className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition ${
-                        recipientMode ===
-                        "all"
-                          ? "border-blue-600 bg-blue-50"
-                          : "border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      <Users
-                        size={
-                          21
+                    {canSendBroadcast && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setRecipientMode(
+                            "all"
+                          )
                         }
-                        className={
+                        className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition ${
                           recipientMode ===
                           "all"
-                            ? "text-blue-700"
-                            : "text-slate-500"
+                            ? "border-blue-600 bg-blue-50"
+                            : "border-slate-200 hover:bg-slate-50"
+                        }`}
+                      >
+                        <Users
+                          size={21}
+                          className={
+                            recipientMode ===
+                            "all"
+                              ? "text-blue-700"
+                              : "text-slate-500"
+                          }
+                        />
+
+                        <div>
+                          <p className="font-black text-slate-900">
+                            All Members
+                          </p>
+
+                          <p className="mt-1 text-xs text-slate-500">
+                            {recipients.length.toLocaleString()} profiles
+                          </p>
+                        </div>
+                      </button>
+                    )}
+
+                    {canSendIndividual && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setRecipientMode(
+                            "single"
+                          )
                         }
-                      />
-
-                      <div>
-                        <p className="font-black text-slate-900">
-                          All Members
-                        </p>
-
-                        <p className="mt-1 text-xs text-slate-500">
-                          {recipients.length.toLocaleString()} profiles
-                        </p>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setRecipientMode(
-                          "single"
-                        )
-                      }
-                      className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition ${
-                        recipientMode ===
-                        "single"
-                          ? "border-blue-600 bg-blue-50"
-                          : "border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      <UserRound
-                        size={
-                          21
-                        }
-                        className={
+                        className={`flex items-center gap-3 rounded-2xl border p-4 text-left transition ${
                           recipientMode ===
                           "single"
-                            ? "text-blue-700"
-                            : "text-slate-500"
-                        }
-                      />
+                            ? "border-blue-600 bg-blue-50"
+                            : "border-slate-200 hover:bg-slate-50"
+                        }`}
+                      >
+                        <UserRound
+                          size={21}
+                          className={
+                            recipientMode ===
+                            "single"
+                              ? "text-blue-700"
+                              : "text-slate-500"
+                          }
+                        />
 
-                      <div>
-                        <p className="font-black text-slate-900">
-                          Specific Member
-                        </p>
+                        <div>
+                          <p className="font-black text-slate-900">
+                            Specific Member
+                          </p>
 
-                        <p className="mt-1 text-xs text-slate-500">
-                          Send privately
-                        </p>
-                      </div>
-                    </button>
+                          <p className="mt-1 text-xs text-slate-500">
+                            Send privately
+                          </p>
+                        </div>
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                {recipientMode ===
-                  "single" && (
+                {canSendIndividual &&
+                  recipientMode ===
+                    "single" && (
                   <div>
                     <label
                       htmlFor="member"
@@ -948,7 +1022,7 @@ export default function NotificationsPage() {
                     </p>
 
                     <p className="mt-3 text-xs font-semibold text-slate-400">
-                      GROW CIG • Just now
+                      GROW CIG â€¢ Just now
                     </p>
                   </div>
                 </div>
@@ -1046,7 +1120,7 @@ export default function NotificationsPage() {
                           </p>
 
                           <p className="mt-3 text-[11px] font-semibold text-slate-400">
-                            {item.recipient_label} •{" "}
+                            {item.recipient_label} â€¢{" "}
                             {formatDate(
                               item.created_at
                             )}
