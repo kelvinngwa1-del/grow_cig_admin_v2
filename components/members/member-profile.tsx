@@ -584,6 +584,72 @@ export default function MemberProfile({
       staff.role,
     ]);
 
+  function openMemberWhatsApp(
+    event:
+      React.MouseEvent<
+        HTMLAnchorElement
+      >
+  ) {
+    if (
+      !memberWhatsAppUrl ||
+      !memberWhatsAppNumber
+    ) {
+      return;
+    }
+
+    const isAndroid =
+      typeof navigator !==
+        "undefined" &&
+      /Android/i.test(
+        navigator.userAgent
+      );
+
+    if (!isAndroid) {
+      return;
+    }
+
+    event.preventDefault();
+
+    const customerName =
+      member.full_name ??
+      "Member";
+
+    const staffName =
+      staff.full_name ??
+      "GROW CIG";
+
+    const staffTitle =
+      whatsappStaffTitle(
+        staff.role
+      );
+
+    const message =
+      `Hello ${customerName}, greetings from GROW CIG. ` +
+      `My name is ${staffName}, ${staffTitle}. ` +
+      `I’m reaching out regarding your account. ` +
+      `Are you available for a discussion?`;
+
+    const packageName =
+      preferredWhatsAppApp ===
+      "whatsapp_business"
+        ? "com.whatsapp.w4b"
+        : "com.whatsapp";
+
+    const fallbackUrl =
+      memberWhatsAppUrl;
+
+    const intentUrl =
+      `intent://send?phone=${memberWhatsAppNumber}` +
+      `&text=${encodeURIComponent(message)}` +
+      `#Intent;scheme=whatsapp;package=${packageName};` +
+      `S.browser_fallback_url=${encodeURIComponent(
+        fallbackUrl
+      )};end`;
+
+    window.location.href =
+      intentUrl;
+  }
+
   const active =
     member.member_activity_status ===
     "active";
@@ -992,6 +1058,9 @@ export default function MemberProfile({
                       }
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={
+                        openMemberWhatsApp
+                      }
                       className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white transition hover:bg-emerald-700"
                     >
                       <MessageCircle
