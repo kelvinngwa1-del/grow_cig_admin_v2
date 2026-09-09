@@ -22,7 +22,13 @@ export default async function DashboardPage() {
   } = await supabase
     .from("staff_users")
     .select(
-      "full_name, email, role, is_active"
+      `
+        full_name,
+        email,
+        role,
+        is_active,
+        preferred_whatsapp_app
+      `
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -38,9 +44,15 @@ export default async function DashboardPage() {
   return (
     <AdminShell
       staff={{
-        full_name: staff.full_name,
-        email: staff.email,
-        role: staff.role,
+        full_name:
+          staff.full_name,
+        email:
+          staff.email,
+        role:
+          staff.role,
+        preferred_whatsapp_app:
+          staff.preferred_whatsapp_app ??
+          "whatsapp",
       }}
     />
   );

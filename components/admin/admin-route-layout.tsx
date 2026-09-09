@@ -40,7 +40,13 @@ export default async function AdminRouteLayout({
     await supabase
       .from("staff_users")
       .select(
-        "full_name, email, role, is_active"
+        `
+          full_name,
+          email,
+          role,
+          is_active,
+          preferred_whatsapp_app
+        `
       )
       .eq(
         "id",
@@ -65,6 +71,9 @@ export default async function AdminRouteLayout({
           staff.email,
         role:
           staff.role,
+        preferred_whatsapp_app:
+          staff.preferred_whatsapp_app ??
+          "whatsapp",
       }}
     >
       {children}

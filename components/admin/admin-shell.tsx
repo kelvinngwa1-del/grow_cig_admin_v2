@@ -42,11 +42,13 @@ import {
 import {
   createClient,
 } from "@/lib/supabase/client";
-
 type Staff = {
   full_name: string;
   email: string;
   role: string;
+  preferred_whatsapp_app:
+    | "whatsapp"
+    | "whatsapp_business";
 };
 
 type AdminShellProps = {

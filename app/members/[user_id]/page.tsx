@@ -79,7 +79,8 @@ export default async function MemberPage({
       full_name,
       email,
       role,
-      is_active
+      is_active,
+      preferred_whatsapp_app
       `
     )
     .eq(
@@ -240,17 +241,18 @@ export default async function MemberPage({
       : null;
 
   // ============================================================
-  // MEMBER PROFILE
-  // ============================================================
-  // ============================================================
   // REGISTRATION FEE
   // ============================================================
 
   const {
-    data: registrationData,
-    error: registrationError,
+    data:
+      registrationData,
+    error:
+      registrationError,
   } = await supabase
-    .from("profiles")
+    .from(
+      "profiles"
+    )
     .select(
       "registration_fee_due, registration_fee_paid"
     )
@@ -260,13 +262,23 @@ export default async function MemberPage({
     )
     .maybeSingle();
 
-  if (registrationError) {
+  if (
+    registrationError
+  ) {
     return (
       <main className="min-h-screen bg-slate-50 p-8">
+
         <div className="mx-auto max-w-7xl rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">
-          Unable to load registration information:{" "}
-          {registrationError.message}
+
+          Unable to load
+          registration
+          information:{" "}
+          {
+            registrationError.message
+          }
+
         </div>
+
       </main>
     );
   }
@@ -275,15 +287,23 @@ export default async function MemberPage({
     ...member,
 
     registration_fee_due:
-      registrationData?.registration_fee_due ??
+      registrationData
+        ?.registration_fee_due ??
       6000,
 
     registration_fee_paid:
-      registrationData?.registration_fee_paid ??
+      registrationData
+        ?.registration_fee_paid ??
       0,
   };
+
+  // ============================================================
+  // GOAL MANAGEMENT PERMISSION
+  // ============================================================
+
   const {
-    data: canManageGoals,
+    data:
+      canManageGoals,
   } = await supabase.rpc(
     "staff_has_permission",
     {
@@ -292,11 +312,15 @@ export default async function MemberPage({
     }
   );
 
-
+  // ============================================================
+  // MEMBER PROFILE
+  // ============================================================
 
   return (
     <MemberProfile
-      member={memberWithRegistration}
+      member={
+        memberWithRegistration
+      }
 
       goals={
         goals
@@ -325,6 +349,7 @@ export default async function MemberPage({
       kyc={
         kyc
       }
+
       canManageGoals={
         canManageGoals ===
         true
@@ -341,6 +366,12 @@ export default async function MemberPage({
 
         role:
           staff.role,
+
+        preferred_whatsapp_app:
+          staff.preferred_whatsapp_app ===
+          "whatsapp_business"
+            ? "whatsapp_business"
+            : "whatsapp",
       }}
     />
   );
