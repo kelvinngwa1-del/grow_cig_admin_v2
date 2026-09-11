@@ -159,21 +159,18 @@ export default async function LoanAgreementPage({
   }
 
   const {
-    data:
-      hasLoanPermission,
-  } = await supabase.rpc(
-    "staff_has_permission",
-    {
-      p_permission_key:
-        "loans.manage",
-    }
-  );
-
-  if (
-    hasLoanPermission !== true
-  ) {
-    redirect("/loans");
+  data: hasLoanPermission,
+} = await supabase.rpc(
+  "staff_has_permission",
+  {
+    p_permission_key:
+      "loans.view",
   }
+);
+
+if (hasLoanPermission !== true) {
+  redirect("/loans");
+}
 
   const {
     data: liveLoan,
@@ -225,6 +222,10 @@ export default async function LoanAgreementPage({
   const loan: AnyRow =
     agreementSnapshot.loan ??
     liveLoan;
+     const isPending =
+  String(
+    loan.status || ""
+  ).toLowerCase() === "pending";
 
   const member: AnyRow =
     agreementSnapshot.member ??
@@ -608,14 +609,19 @@ export default async function LoanAgreementPage({
 
           <div className="screen-only mb-4 flex items-center justify-end gap-3">
 
-            <LoanAgreementFinalizeButton
-              finalizeAction={
-                finalizeAgreementAction
-              }
-              isFinalized={
-                isFinalized
-              }
-            />
+        <LoanAgreementFinalizeButton
+  finalizeAction={
+    finalizeAgreementAction
+  }
+  isFinalized={
+    isFinalized
+  }
+  canFinalize={
+    ["approved", "active", "completed", "defaulted"].includes(
+      String(loan.status || "").toLowerCase()
+    )
+  }
+/>
 
             <LoanAgreementPrintButton />
 
@@ -716,9 +722,11 @@ export default async function LoanAgreementPage({
 
                 <section className="agreement-title text-center">
 
-                  <h2 className="text-lg font-black uppercase tracking-[0.24em] text-slate-950">
-                    Loan Agreement
-                  </h2>
+                <h2 className="text-lg font-black uppercase tracking-[0.24em] text-slate-950">
+  {isPending
+    ? "Loan Pre-Agreement"
+    : "Loan Agreement"}
+</h2>
 
                   <div className="mx-auto mt-2 h-1 w-16 rounded-full bg-blue-700" />
 
@@ -726,13 +734,29 @@ export default async function LoanAgreementPage({
 
                 {/* INTRO */}
 
-                <p className="intro text-sm leading-6 text-slate-700">
-                  This agreement is made between{" "}
-                  <strong className="text-slate-950">
-                    {organizationName}
-                  </strong>{" "}
-                  and the borrower named below. The borrower confirms that the information provided is correct and agrees to repay the loan according to the approved conditions and repayment schedule.
-                </p>
+               <p className="intro text-sm leading-6 text-slate-700">
+  {isPending ? (
+    <>
+      This pre-agreement is prepared between{" "}
+      <strong className="text-slate-950">
+        {organizationName}
+      </strong>{" "}
+      and the applicant named below for review purposes. It summarizes
+      the requested loan details and proposed repayment terms and does
+      not constitute final loan approval or disbursement.
+    </>
+  ) : (
+    <>
+      This agreement is made between{" "}
+      <strong className="text-slate-950">
+        {organizationName}
+      </strong>{" "}
+      and the borrower named below. The borrower confirms that the
+      information provided is correct and agrees to repay the loan
+      according to the approved conditions and repayment schedule.
+    </>
+  )}
+</p>
 
                 {/* BORROWER DETAILS */}
 

@@ -297,53 +297,95 @@ export default function LoanDetails({
   // ============================================================
 
   const [
-    canManage,
-    setCanManage,
+    canView,
+    setCanView,
+  ] = useState(false);
+
+  const [
+    canApprove,
+    setCanApprove,
+  ] = useState(false);
+
+  const [
+    canDisburse,
+    setCanDisburse,
   ] = useState(false);
 
   useEffect(() => {
     let mounted =
       true;
 
-    async function loadLoanPermission() {
+    async function loadLoanPermissions() {
       const client =
         createClient();
 
-      const {
-        data,
-        error:
-          permissionError,
-      } = await client.rpc(
-        "staff_has_permission",
-        {
-          p_permission_key:
-            "loans.manage",
-        }
-      );
+      const [
+        viewPermission,
+        approvePermission,
+        disbursePermission,
+      ] = await Promise.all([
+        client.rpc(
+          "staff_has_permission",
+          {
+            p_permission_key:
+              "loans.view",
+          }
+        ),
+        client.rpc(
+          "staff_has_permission",
+          {
+            p_permission_key:
+              "loans.approve",
+          }
+        ),
+        client.rpc(
+          "staff_has_permission",
+          {
+            p_permission_key:
+              "loans.disburse",
+          }
+        ),
+      ]);
 
       if (!mounted) {
         return;
       }
 
-      if (permissionError) {
+      if (viewPermission.error) {
         console.error(
-          "LOAN PERMISSION ERROR:",
-          permissionError
+          "LOAN VIEW PERMISSION ERROR:",
+          viewPermission.error
         );
-
-        setCanManage(
-          false
-        );
-
-        return;
       }
 
-      setCanManage(
-        data === true
+      if (approvePermission.error) {
+        console.error(
+          "LOAN APPROVE PERMISSION ERROR:",
+          approvePermission.error
+        );
+      }
+
+      if (disbursePermission.error) {
+        console.error(
+          "LOAN DISBURSE PERMISSION ERROR:",
+          disbursePermission.error
+        );
+      }
+
+      setCanView(
+        viewPermission.data === true
+      );
+
+      setCanApprove(
+        approvePermission.data === true
+      );
+
+      setCanDisburse(
+        disbursePermission.data === true
       );
     }
 
-    void loadLoanPermission();
+    void loadLoanPermissions();
 
     return () => {
       mounted =
@@ -368,9 +410,24 @@ export default function LoanDetails({
     setError("");
     setMessage("");
 
-    if (!canManage) {
+    if (
+      (action === "approve" ||
+        action === "reject") &&
+      !canApprove
+    ) {
       setError(
-        "You do not have permission to manage loans."
+        "You do not have permission to approve or reject loans."
+      );
+
+      return;
+    }
+
+    if (
+      action === "disburse" &&
+      !canDisburse
+    ) {
+      setError(
+        "You do not have permission to disburse loans."
       );
 
       return;
@@ -1018,7 +1075,7 @@ export default function LoanDetails({
             ADMIN ACTIONS
         ====================================================== */}
 
-        {canManage && (
+        {(canView || canApprove || canDisburse) && (
           <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6">
 
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1075,7 +1132,8 @@ export default function LoanDetails({
             ================================================== */}
 
             {status ===
-              "pending" && (
+              "pending" &&
+              canApprove && (
               <div className="mt-5 grid gap-4 lg:grid-cols-2">
 
                 {/* APPROVE */}
@@ -1176,7 +1234,8 @@ export default function LoanDetails({
             ================================================== */}
 
             {status ===
-              "approved" && (
+              "approved" &&
+              canDisburse && (
               <div className="mt-5">
 
                 <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-4">

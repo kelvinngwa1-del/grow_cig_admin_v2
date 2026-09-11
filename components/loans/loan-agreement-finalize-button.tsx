@@ -3,11 +3,13 @@
 type Props = {
   finalizeAction: () => Promise<void>;
   isFinalized: boolean;
+  canFinalize: boolean;
 };
 
 export default function LoanAgreementFinalizeButton({
   finalizeAction,
   isFinalized,
+  canFinalize,
 }: Props) {
   if (isFinalized) {
     return (
@@ -21,13 +23,22 @@ export default function LoanAgreementFinalizeButton({
     );
   }
 
+  if (!canFinalize) {
+    return (
+      <span className="rounded-lg bg-amber-100 px-4 py-2 text-sm font-bold text-amber-700">
+        Pre-Agreement
+      </span>
+    );
+  }
+
   return (
     <form
       action={finalizeAction}
       onSubmit={(event) => {
-        const confirmed = window.confirm(
-          "Finalize this loan agreement?\n\nOnce finalized, this agreement snapshot will be locked and future borrower or document-setting changes will not update it."
-        );
+        const confirmed =
+          window.confirm(
+            "Finalize this loan agreement?\n\nOnce finalized, this agreement snapshot will be locked and future borrower or document-setting changes will not update it."
+          );
 
         if (!confirmed) {
           event.preventDefault();

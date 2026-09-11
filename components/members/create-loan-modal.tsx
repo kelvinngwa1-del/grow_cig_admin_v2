@@ -187,8 +187,8 @@ export default function CreateLoanModal({
   ] = useState("");
 
   const [
-    canManageLoans,
-    setCanManageLoans,
+    canCreateLoans,
+    setCanCreateLoans,
   ] = useState(false);
 
   const [
@@ -409,7 +409,7 @@ export default function CreateLoanModal({
   }, []);
 
   // ============================================================
-  // LOAD LOAN MANAGEMENT PERMISSION
+  // LOAD LOAN CREATION PERMISSION
   // ============================================================
 
   useEffect(() => {
@@ -432,7 +432,7 @@ export default function CreateLoanModal({
         "staff_has_permission",
         {
           p_permission_key:
-            "loans.manage",
+            "loans.create",
         }
       );
 
@@ -446,7 +446,7 @@ export default function CreateLoanModal({
           permissionError
         );
 
-        setCanManageLoans(
+        setCanCreateLoans(
           false
         );
 
@@ -457,7 +457,7 @@ export default function CreateLoanModal({
         return;
       }
 
-      setCanManageLoans(
+      setCanCreateLoans(
         data === true
       );
 
@@ -635,7 +635,7 @@ export default function CreateLoanModal({
     !duplicateLoan;
 
   const canOverride =
-    canManageLoans;
+    canCreateLoans;
 
   const amountValid =
     amount > 0 &&
@@ -650,7 +650,7 @@ export default function CreateLoanModal({
   const canSubmitNormally =
     !loadingSettings &&
     !loadingPermission &&
-    canManageLoans &&
+    canCreateLoans &&
     amountValid &&
     durationValid &&
     normalEligibility;
@@ -658,7 +658,7 @@ export default function CreateLoanModal({
   const canSubmitWithOverride =
     !loadingSettings &&
     !loadingPermission &&
-    canManageLoans &&
+    canCreateLoans &&
     amountValid &&
     durationValid &&
     !duplicateLoan &&
@@ -695,9 +695,9 @@ export default function CreateLoanModal({
       return;
     }
 
-    if (!canManageLoans) {
+    if (!canCreateLoans) {
       setError(
-        "You do not have permission to create or manage loans."
+        "You do not have permission to create loans."
       );
 
       return;
@@ -991,21 +991,21 @@ export default function CreateLoanModal({
                 className="animate-spin"
               />
 
-              Checking loan management permission...
+              Checking loan creation permission...
 
             </div>
           )}
 
           {!loadingPermission &&
-            !canManageLoans && (
+            !canCreateLoans && (
               <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
 
                 <p className="text-sm font-black text-amber-900">
-                  Loan Management Access Required
+                  Loan Creation Access Required
                 </p>
 
                 <p className="mt-1 text-xs leading-5 text-amber-700">
-                  Your account can view this member, but it does not have the loans.manage duty required to create or override loans.
+                  Your account can view this member, but it does not have the loans.create duty required to create loans.
                 </p>
 
               </div>
