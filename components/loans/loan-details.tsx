@@ -1028,6 +1028,7 @@ export default function LoanDetails({
               </p>
 
               {[
+                "pending",
                 "approved",
                 "active",
                 "disbursed",
