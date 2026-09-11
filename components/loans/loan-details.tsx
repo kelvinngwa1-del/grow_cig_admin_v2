@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   CheckCircle2,
   CircleDollarSign,
+  FileText,
   CreditCard,
   HandCoins,
   Loader2,
@@ -1020,9 +1021,31 @@ export default function LoanDetails({
         {canManage && (
           <section className="mt-6 rounded-3xl border border-slate-200 bg-white p-6">
 
-            <p className="text-lg font-black text-slate-950">
-              Admin Actions
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+
+              <p className="text-lg font-black text-slate-950">
+                Admin Actions
+              </p>
+
+              {[
+                "approved",
+                "active",
+                "disbursed",
+                "repaying",
+                "completed",
+                "overdue",
+                "defaulted",
+              ].includes(status) && (
+                <Link
+                  href={`/loans/${loan.id}/agreement`}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-slate-800"
+                >
+                  <FileText size={17} />
+                  View Loan Agreement
+                </Link>
+              )}
+
+            </div>
 
             {/* SUCCESS */}
 

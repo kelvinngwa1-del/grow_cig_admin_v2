@@ -229,7 +229,16 @@ const navigation: NavigationItem[] =
       icon:
         UserRoundCog,
     },
-
+{
+  label:
+    "Document Settings",
+  href:
+    "/settings/documents",
+  permission:
+    "settings.manage",
+  icon:
+    Settings,
+},
     {
       label:
         "Loan Settings",
